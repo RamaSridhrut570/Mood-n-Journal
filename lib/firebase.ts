@@ -14,4 +14,8 @@ const app = !getApps().length ? initializeApp({
 
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
-export const db = getFirestore(app, config.firestoreDatabaseId);
+googleProvider.addScope('https://www.googleapis.com/auth/tasks');
+googleProvider.addScope('https://www.googleapis.com/auth/tasks.readonly');
+googleProvider.addScope('https://www.googleapis.com/auth/calendar');
+googleProvider.addScope('https://www.googleapis.com/auth/calendar.events');
+export const db = getFirestore(app, (config as any).firestoreDatabaseId || 'ai-studio-reflectivejourna-39f5b63d-1055-42fb-9d47-9ccb4dcde8bc');

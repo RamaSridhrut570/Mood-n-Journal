@@ -1,5 +1,5 @@
 import { db } from './firebase';
-import { collection, doc, setDoc, getDocs, getDoc, query, orderBy, serverTimestamp, addDoc, updateDoc, Timestamp, deleteDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, getDocs, getDoc, query, orderBy, serverTimestamp, addDoc, updateDoc, Timestamp, deleteDoc, writeBatch } from 'firebase/firestore';
 
 export interface Journal {
   id: string;
@@ -7,6 +7,8 @@ export interface Journal {
   createdAt: any;
   updatedAt: any;
   mood?: string;
+  compiledJournal?: string;
+  lastSummarizedMessageId?: string;
 }
 
 export interface Message {
@@ -65,6 +67,37 @@ export async function updateJournalMood(userId: string, journalId: string, mood:
     mood,
     updatedAt: serverTimestamp(),
   });
+}
+
+export async function updateJournalSummary(userId: string, journalId: string, compiledJournal: string, lastSummarizedMessageId: string): Promise<void> {
+  const docRef = doc(db, 'users', userId, 'journals', journalId);
+  await updateDoc(docRef, {
+    compiledJournal,
+    lastSummarizedMessageId,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function addMessagesBatch(userId: string, journalId: string, messages: {role: 'user'|'model', text: string}[]): Promise<void> {
+  const batch = writeBatch(db);
+  const messagesRef = collection(db, 'users', userId, 'journals', journalId, 'messages');
+  const journalRef = doc(db, 'users', userId, 'journals', journalId);
+  
+  const now = Date.now();
+  messages.forEach((msg, index) => {
+    const msgDocRef = doc(messagesRef);
+    batch.set(msgDocRef, {
+      role: msg.role,
+      text: msg.text,
+      createdAt: Timestamp.fromMillis(now + index),
+    });
+  });
+
+  batch.update(journalRef, {
+    updatedAt: serverTimestamp()
+  });
+
+  await batch.commit();
 }
 
 export async function addMessage(userId: string, journalId: string, role: 'user' | 'model', text: string): Promise<string> {

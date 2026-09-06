@@ -1,6 +1,7 @@
 import type {Metadata} from 'next';
 import './globals.css'; // Global styles
 import { AuthProvider } from '@/lib/auth-context';
+import { Toaster } from '@/components/Toast';
 
 export const metadata: Metadata = {
   title: 'Reflective Journal',
@@ -23,6 +24,7 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
       <body suppressHydrationWarning>
         <AuthProvider>
           {children}
+          <Toaster />
         </AuthProvider>
       </body>
     </html>
