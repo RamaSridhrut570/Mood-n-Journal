@@ -37,9 +37,29 @@ A secure, cloud-synced AI reflection and journaling platform built with Next.js,
 ## 🔒 Security & Data Isolation
 
 - **Client Token Verification:** Firebase ID tokens are checked before granting access to data streams.
-- **Firestore Security Rules:** Strict rules restrict document access so users can only read and write data under their unique Firebase `UID`.
 - **Environment Isolation:** Sensitive credentials such as the Gemini API Key are managed securely at deployment without exposure to client bundles.
 
+### Firestore Security Rules
+Strict rules restrict document access so users can only read and write data under their unique Firebase `UID`. The following rules are deployed to guarantee complete user-level data isolation:
+
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      match /journals/{journalId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+        
+        match /messages/{messageId} {
+          allow read, write: if request.auth != null && request.auth.uid == userId;
+        }
+      }
+    }
+  }
+}
+'''
 ---
 
 ## 🚀 Getting Started
