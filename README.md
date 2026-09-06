@@ -55,5 +55,5 @@ A secure, cloud-synced AI reflection and journaling platform built with Next.js,
 
 1. **Clone the repository:**
    ```bash
-   git clone [https://github.com/your-username/reflective-journal.git](https://github.com/your-username/reflective-journal.git)
+   git clone https://github.com/your-username/reflective-journal.git
    cd reflective-journal
