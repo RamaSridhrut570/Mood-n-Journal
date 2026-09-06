@@ -21,14 +21,13 @@ export default function Dashboard() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [isDark, setIsDark] = useState(false);
-
-  useEffect(() => {
-    if (window.innerWidth < 768) {
-      setSidebarOpen(false);
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth >= 768;
     }
-  }, []);
+    return true;
+  });
+  const [isDark, setIsDark] = useState(false);
 
   const [editingJournalId, setEditingJournalId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');

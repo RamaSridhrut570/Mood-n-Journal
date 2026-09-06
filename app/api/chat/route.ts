@@ -1,46 +1,5 @@
-import { GoogleGenAI } from '@google/genai';
 import { NextRequest, NextResponse } from 'next/server';
-
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-
-async function generateContentWithFallback(contents: any[], config: any) {
-  const models = [
-    'gemini-3.5-flash',
-    'gemini-2.5-flash',
-    'gemini-flash-latest',
-    'gemini-1.5-flash'
-  ];
-
-  let lastError: any = null;
-  for (const model of models) {
-    try {
-      const response = await ai.models.generateContent({
-        model,
-        contents,
-        config,
-      });
-      return response;
-    } catch (error: any) {
-      console.warn(`Model ${model} failed:`, error.message);
-      lastError = error;
-      const status = error.status || error?.response?.status;
-      const errorMsg = typeof error.message === 'string' ? error.message : JSON.stringify(error);
-      
-      // Recoverable errors
-      if (
-        [503, 429, 404, 500].includes(status) || 
-        errorMsg.includes('503') || errorMsg.includes('UNAVAILABLE') ||
-        errorMsg.includes('429') || errorMsg.includes('RESOURCE_EXHAUSTED') ||
-        errorMsg.includes('404') || errorMsg.includes('NOT_FOUND') || errorMsg.includes('not found') ||
-        errorMsg.includes('500') || errorMsg.includes('INTERNAL')
-      ) {
-        continue;
-      }
-      throw error;
-    }
-  }
-  throw lastError || new Error('All models in fallback ladder failed.');
-}
+import { generateContentWithFallback } from '@/lib/gemini';
 
 export async function POST(req: NextRequest) {
   try {

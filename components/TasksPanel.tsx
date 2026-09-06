@@ -11,6 +11,7 @@ export function TasksPanel({ onClose, journalText, messages }: { onClose: () => 
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editedTaskTitle, setEditedTaskTitle] = useState('');
   const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null);
+  const [extractStatus, setExtractStatus] = useState<{ type: 'error' | 'success'; message: string } | null>(null);
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,21 +23,30 @@ export function TasksPanel({ onClose, journalText, messages }: { onClose: () => 
   const handleExtractTasks = async () => {
     if (!journalText && (!messages || messages.length === 0)) return;
     setIsExtracting(true);
+    setExtractStatus(null);
     try {
       const res = await fetch('/api/extract-tasks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ journalText, messages })
       });
-      if (!res.ok) throw new Error('Failed to extract');
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Failed to extract tasks');
+      }
       const data = await res.json();
       const extractedTitles: string[] = data.tasks || [];
-      for (const title of extractedTitles) {
-        await addTask(title);
+      if (extractedTitles.length === 0) {
+        setExtractStatus({ type: 'success', message: 'No new actionable tasks found.' });
+      } else {
+        for (const title of extractedTitles) {
+          await addTask(title);
+        }
+        setExtractStatus({ type: 'success', message: `Extracted ${extractedTitles.length} task${extractedTitles.length > 1 ? 's' : ''}.` });
       }
-    } catch (e) {
-      console.error(e);
-      alert('Failed to extract tasks');
+    } catch (e: any) {
+      console.error('Extraction error:', e);
+      setExtractStatus({ type: 'error', message: e?.message || 'Failed to extract tasks. Please try again.' });
     } finally {
       setIsExtracting(false);
     }
@@ -76,15 +86,26 @@ export function TasksPanel({ onClose, journalText, messages }: { onClose: () => 
         </button>
       </div>
 
-      <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex gap-2">
+      <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex flex-col gap-2">
         <button 
           onClick={handleExtractTasks}
           disabled={isExtracting}
-          className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-md text-sm font-medium hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-md text-sm font-medium hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors disabled:opacity-50"
         >
           {isExtracting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
           Auto-Extract from Chat
         </button>
+        {extractStatus && (
+          <div
+            className={`text-xs px-2.5 py-1.5 rounded ${
+              extractStatus.type === 'error'
+                ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50'
+                : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50'
+            }`}
+          >
+            {extractStatus.message}
+          </div>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-2">

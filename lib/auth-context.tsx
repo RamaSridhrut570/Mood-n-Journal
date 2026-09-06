@@ -25,18 +25,18 @@ let cachedAccessToken: string | null = null;
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [tokenState, setTokenState] = useState<string | null>(null);
-
-  useEffect(() => {
-    // Restore token from session storage on mount
+  const [tokenState, setTokenState] = useState<string | null>(() => {
     if (typeof window !== 'undefined') {
       const storedToken = sessionStorage.getItem('google_access_token');
       if (storedToken) {
         cachedAccessToken = storedToken;
-        setTokenState(storedToken);
+        return storedToken;
       }
     }
+    return null;
+  });
 
+  useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       if (!currentUser) {
