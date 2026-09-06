@@ -59,7 +59,7 @@ service cloud.firestore {
     }
   }
 }
-'''
+```
 ---
 
 ## 🚀 Getting Started
